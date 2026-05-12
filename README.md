@@ -38,4 +38,7 @@ If you use this code in your research, please cite:
       url={https://arxiv.org/abs/2605.10183}, 
 }
 ```
+## Acknowledgements
+
+This codebase builds on [ESAM]([https://github.com/mlfoundations/task_vectors](https://github.com/dydjw9/Efficient_SAM))  Dataset setup scripts are adapted from those repositories.
 
