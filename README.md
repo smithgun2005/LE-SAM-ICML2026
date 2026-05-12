@@ -40,5 +40,5 @@ If you use this code in your research, please cite:
 ```
 ## Acknowledgements
 
-This codebase builds on [ESAM]((https://github.com/dydjw9/Efficient_SAM))  Dataset setup scripts are adapted from those repositories.
+This codebase builds on [ESAM](https://github.com/dydjw9/Efficient_SAM)  Dataset setup scripts are adapted from those repositories.
 
