@@ -1,6 +1,6 @@
 # LE-SAM: Loss-Equated Sharpness-Aware Minimization
 
-A PyTorch implementation of our paper Accepted by ICML2026([https://github.com/mlfoundations/task_vectors](https://arxiv.org/abs/2605.10183)) **Fix the Loss, Not the Radius: Rethinking the Adversarial Perturbation of Sharpness-Aware Minimization**
+A PyTorch implementation of our paper Accepted by ICML2026[(https://arxiv.org/abs/2605.10183)] **Fix the Loss, Not the Radius: Rethinking the Adversarial Perturbation of Sharpness-Aware Minimization**
 
 
 ### Requirements
