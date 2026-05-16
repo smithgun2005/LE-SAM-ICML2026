@@ -1,4 +1,4 @@
-# LE-SAM: Loss-Equated Sharpness-Aware Minimization
+# LE-SAM: Loss-Equated Sharpness-Aware Minimization（Updates ongoing）
 
 A PyTorch implementation of our paper Accepted by ICML2026 **Fix the Loss, Not the Radius: Rethinking the Adversarial Perturbation of Sharpness-Aware Minimization**(https://arxiv.org/abs/2605.10183)
 
@@ -21,7 +21,7 @@ python lesam.py \
     --learning_rate 0.05 \
     --weight_decay 0.001 \
     --lesam_sigma 0.35 \
-    --lesam_rho_max 0.3 \
+    --lesam_rho_max 0.25 \
 ```
 ## Citation
 
