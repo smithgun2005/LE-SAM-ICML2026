@@ -304,7 +304,7 @@ def train(args, model):
     lesam_sigma_min = float(getattr(args, "lesam_sigma_min", 0.0))
 
     lesam_sigma_warmup_epochs = int(
-        getattr(args, "lesam_sigma_warmup_epochs", getattr(args, "lesam_sigma_warmup", 10))
+        getattr(args, "lesam_sigma_warmup_epochs", getattr(args, "lesam_sigma_warmup", 10))#default sigma warmup
     )
     lesam_sigma_warmup_start = float(getattr(args, "lesam_sigma_warmup_start", 0.0))
 
