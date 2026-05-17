@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import argparse
 import os
 import logging
@@ -75,7 +74,7 @@ class LESAM(torch.optim.Optimizer):
 
         grad_norm = self._grad_norm()
         if grad_norm.item() == 0.0:
-            # 若中心梯度为 0，清空缓存，避免后续 descent_step 报错
+
             self._saved_eps = None
             self._last_rho = 0.0
             if zero_grad:
@@ -113,7 +112,7 @@ class LESAM(torch.optim.Optimizer):
     def descent_step(self, zero_grad: bool = True):
 
         if self._saved_eps is None:
-            # 若没有 ascent_step 的有效扰动，直接当普通优化器用
+          
             self.base_optimizer.step()
             if zero_grad:
                 self.zero_grad(set_to_none=True)
