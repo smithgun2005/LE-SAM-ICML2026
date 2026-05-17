@@ -176,7 +176,7 @@ def masked_mean_with_indices(loss_vec: torch.Tensor, indices: torch.Tensor) -> t
     return loss_vec.index_select(0, indices).mean()
 
 
-# ====== NEW: sigma schedule helper ======
+# ====== NEW: sigma schedule helper with linear warmup ======
 def schedule_lesam_sigma(
     epoch: int,
     sigma_init: float,
@@ -184,26 +184,68 @@ def schedule_lesam_sigma(
     decay_start: int,
     total_epochs: int,
     mode: str = "none",
+    warmup_epochs: int = 0,
+    warmup_start: float = 0.0,
 ) -> float:
     """
-    Keep sigma constant before decay_start, then decay to sigma_min until the last epoch.
-    mode: "none" | "linear" | "cosine"
+    Per-epoch sigma schedule for LE-SAM.
+
+    Stage 1: optional linear warmup
+        epoch = 0                       -> warmup_start
+        epoch = warmup_epochs - 1       -> sigma_init
+
+    Stage 2: optional decay
+        keep sigma_init before decay_start, then decay to sigma_min until the last epoch.
+        mode: "none" | "linear" | "cosine"
+
+    Notes:
+        - If warmup_epochs <= 0, warmup is disabled.
+        - Decay starts after max(decay_start, warmup_epochs), so warmup and decay do not overlap.
     """
     mode = (mode or "none").lower()
+    warmup_epochs = max(0, int(warmup_epochs))
+    total_epochs = int(total_epochs)
+    decay_start = int(decay_start)
+
+    sigma_init = float(sigma_init)
+    sigma_min = float(sigma_min)
+    warmup_start = float(warmup_start)
+
+    # ---------- Stage 1: linear warmup ----------
+    if warmup_epochs > 0 and epoch < warmup_epochs:
+        if warmup_epochs == 1:
+            sigma = sigma_init
+        else:
+            # t: 0 -> 1 over the warmup window
+            t = float(epoch) / float(warmup_epochs - 1)
+            t = max(0.0, min(1.0, t))
+            sigma = warmup_start + (sigma_init - warmup_start) * t
+
+        # clamp inside [warmup_start, sigma_init]
+        lo = min(warmup_start, sigma_init)
+        hi = max(warmup_start, sigma_init)
+        sigma = max(lo, min(hi, float(sigma)))
+        return float(sigma)
+
+    # ---------- Stage 2: optional decay ----------
     if mode == "none":
         return float(sigma_init)
 
-    if epoch < decay_start:
+    # Avoid decay overlapping with warmup.
+    effective_decay_start = max(decay_start, warmup_epochs)
+
+    if epoch < effective_decay_start:
         return float(sigma_init)
 
     # number of epochs in decay stage
-    decay_len = total_epochs - int(decay_start)
+    decay_len = total_epochs - int(effective_decay_start)
     if decay_len <= 1:
         return float(sigma_min)
 
-    # progress t in [0,1], where epoch=decay_start -> 0, epoch=total_epochs-1 -> 1
+    # progress t in [0,1], where epoch=effective_decay_start -> 0,
+    # epoch=total_epochs-1 -> 1
     denom = max(1, decay_len - 1)
-    t = float(epoch - decay_start) / float(denom)
+    t = float(epoch - effective_decay_start) / float(denom)
     t = max(0.0, min(1.0, t))
 
     if mode == "linear":
@@ -245,8 +287,8 @@ def train(args, model):
     weight_decay = float(getattr(args, "weight_decay", 0))
     momentum = float(getattr(args, "momentum", 0.9)) if hasattr(args, "momentum") else 0.9
 
-    lesam_sigma = float(getattr(args, "lesam_sigma", 5))
-    lesam_rho_max = float(getattr(args, "lesam_rho_max", 0.2))
+    lesam_sigma = float(getattr(args, "lesam_sigma", 0.35))
+    lesam_rho_max = float(getattr(args, "lesam_rho_max", 0.3))
     lesam_adaptive = bool(getattr(args, "lesam_adaptive", False))
     lesam_eps = float(getattr(args, "lesam_eps", 1e-12))
 
@@ -259,8 +301,13 @@ def train(args, model):
     # ====== sigma schedule args (all optional) ======
 
     lesam_sigma_decay = str(getattr(args, "lesam_sigma_decay", "cosine")).lower()
-    lesam_sigma_decay_start = int(getattr(args, "lesam_sigma_decay_start", 300))  # default: never decay
+    lesam_sigma_decay_start = int(getattr(args, "lesam_sigma_decay_start", 160))  
     lesam_sigma_min = float(getattr(args, "lesam_sigma_min", 0.0))
+
+    lesam_sigma_warmup_epochs = int(
+        getattr(args, "lesam_sigma_warmup_epochs", getattr(args, "lesam_sigma_warmup", 10))
+    )
+    lesam_sigma_warmup_start = float(getattr(args, "lesam_sigma_warmup_start", 0.0))
 
     optimizer = LESAM(
         model.parameters(),
@@ -285,6 +332,8 @@ def train(args, model):
         )
         logger.info(
             f"[LE-SAM sigma schedule] mode={lesam_sigma_decay}, "
+            f"warmup_epochs={lesam_sigma_warmup_epochs}, "
+            f"warmup_start={lesam_sigma_warmup_start}, "
             f"decay_start={lesam_sigma_decay_start}, sigma_min={lesam_sigma_min}"
         )
 
@@ -328,6 +377,8 @@ def train(args, model):
             decay_start=lesam_sigma_decay_start,
             total_epochs=args.epochs,
             mode=lesam_sigma_decay,
+            warmup_epochs=lesam_sigma_warmup_epochs,
+            warmup_start=lesam_sigma_warmup_start,
         )
         for g in optimizer.param_groups:
             g["sigma"] = float(sigma_now)
