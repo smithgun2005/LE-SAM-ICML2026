@@ -21,7 +21,7 @@ python lesam.py \
     --learning_rate 0.05 \
     --weight_decay 0.001 \
     --lesam_sigma 0.35 \
-    --lesam_rho_max 0.25 \
+    --lesam_rho_max 0.3 \
 ```
 ## Citation
 
