@@ -1,4 +1,4 @@
-# LE-SAM: Loss-Equated Sharpness-Aware Minimization（Updates ongoing）
+# LE-SAM: Loss-Equated Sharpness-Aware Minimization
 
 A PyTorch implementation of our paper Accepted by ICML2026 **Fix the Loss, Not the Radius: Rethinking the Adversarial Perturbation of Sharpness-Aware Minimization**(https://arxiv.org/abs/2605.10183)
 
@@ -23,6 +23,7 @@ python lesam.py \
     --lesam_sigma 0.35 \
     --lesam_rho_max 0.3 \
 ```
+All the experiment hyperparameters are shown in the appendix, please use batch_size=128 instead of 256 for wide-resnet in CIFAR experiment, we will update the paper version soon
 ## Citation
 
 If you use this code in your research, please cite:
